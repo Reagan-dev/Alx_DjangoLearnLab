@@ -19,16 +19,10 @@ def books_in_library(library_name):
 # Retrieve the librarian for a library
 def librarian_for_library(library_name):
     library = Library.objects.get(name=library_name)
-    return library.librarian  # because of OneToOneField
+    return Librarian.objects.get(library=library)
 
-if __name__ == "__main__":
-    print("Books by George Orwell:")
-    for book in books_by_author("George Orwell"):
-        print(f"- {book.title}")
-
-    print("\nBooks in Main Library:")
-    for book in books_in_library("Main Library"):
-        print(f"- {book.title}")
-
-    librarian = librarian_for_library("Main Library")
-    print(f"\nLibrarian of Main Library: {librarian.name}") 
+if _name_ == "_main_":
+    # Example usage
+    print(books_by_author("George Orwell"))
+    print(books_in_library("Main Library"))
+    print(librarian_for_library("Main Library"))
