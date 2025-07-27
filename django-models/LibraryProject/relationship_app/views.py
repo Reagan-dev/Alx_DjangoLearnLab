@@ -9,7 +9,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
-
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import permission_required
 
 
 # Function-based view
@@ -34,6 +35,35 @@ def register_view(request):
     else:
         form = UserCreationForm()
     return render(request, 'relationship_app/register.html', {'form': form})
+
+# Add Book
+@permission_required('relationship_app.can_add_book', raise_exception=True)
+def add_book(request):
+    if request.method == "POST":
+        title = request.POST.get('title')
+        author = request.POST.get('author')
+        publication_year = request.POST.get('publication_year')
+        Book.objects.create(title=title, author_id=author, publication_year=publication_year)
+        return redirect('book_list')  # redirect after adding
+    return render(request, 'relationship_app/add_book.html')
+
+# Edit Book
+@permission_required('relationship_app.can_change_book', raise_exception=True)
+def edit_book(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+    if request.method == "POST":
+        book.title = request.POST.get('title')
+        book.publication_year = request.POST.get('publication_year')
+        book.save()
+        return redirect('book_list')
+    return render(request, 'relationship_app/edit_book.html', {'book': book})
+
+# Delete Book
+@permission_required('relationship_app.can_delete_book', raise_exception=True)
+def delete_book(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+    book.delete()
+    return redirect('book_list')
 
 
 # Helper functions to check roles
