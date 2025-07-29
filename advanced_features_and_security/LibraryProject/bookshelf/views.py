@@ -30,3 +30,9 @@ def edit_article(request, article_id):
 def delete_article(request, article_id):
     # Code for deleting article
     pass
+
+Book.objects.filter(title__icontains=user_input)
+
+form = BookForm(request.POST)
+if form.is_valid():
+    form.save()
