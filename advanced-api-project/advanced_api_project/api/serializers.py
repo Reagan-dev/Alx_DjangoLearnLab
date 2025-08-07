@@ -24,7 +24,7 @@ class BookSerializer(serializers.ModelSerializer):
 class AuthorSerializer(serializers.ModelSerializer):
     # Nested serializer for books related to the author
     # This will include all books written by the author in the response
-    books = BookSerializer(many=True, read_only=True)
+    books = BookSerializer(many=True, read_only=True, source='books')
 
     class Meta:
         # Specify the model and fields to be serialized
