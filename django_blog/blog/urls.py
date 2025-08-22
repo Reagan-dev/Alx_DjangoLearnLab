@@ -33,4 +33,5 @@ path('post/<int:pk>/delete/', views.PostDeleteView.as_view(), name='post_delete'
 path('posts/<int:pk>/', views.PostDetailView.as_view(), name='post_detail'),path('posts/<int:post_id>/comments/new/', views.add_comment, name='add_comment'),
 path('comments/<int:pk>/update/', views.CommentUpdateView.as_view(), name='comment_update'),
 path('comments/<int:pk>/delete/', views.CommentDeleteView.as_view(), name='comment_delete'),
+path('posts/<int:pk>/comments/new/', views.CommentCreateView.as_view(), name='comment_create'),
 ]
