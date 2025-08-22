@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from .models import Post
 
 
 class RegistrationForm(UserCreationForm):
@@ -20,3 +21,9 @@ def clean_email(self):
 class ProfileForm(forms.Form):
 	email = forms.EmailField(required=True)
 	bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 4}))
+	
+
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'content']
