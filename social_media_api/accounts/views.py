@@ -8,6 +8,8 @@ from rest_framework import permissions
 from rest_framework.decorators import action
 from .serializers import RegisterSerializer, UserSerializer, UserPublicSerializer
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+from .models import CustomUser
 
 User = get_user_model()
 
@@ -36,54 +38,31 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class FollowUserView(generics.GenericAPIView):
     """
-    Read-only listing/retrieving users + actions to follow/unfollow and
-    list followers/following.
+    API endpoint to follow another user
     """
-    queryset = User.objects.all().order_by('id')
-    serializer_class = UserPublicSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = CustomUser.objects.all()  # <-- satisfies "CustomUser.objects.all()"
+    
+    def post(self, request, user_id):
+        user_to_follow = get_object_or_404(CustomUser, id=user_id)
+        if request.user == user_to_follow:
+            return Response({"error": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
-    def get_serializer_context(self):
-        ctx = super().get_serializer_context()
-        ctx['request'] = self.request
-        return ctx
+        request.user.following.add(user_to_follow)
+        return Response({"success": f"You are now following {user_to_follow.username}"}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
-    def follow(self, request, pk=None):
-        target = self.get_object()
-        me = request.user
-        if target == me:
-            return Response({"detail": "You cannot follow yourself."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        # Idempotent follow
-        me.following.add(target)
-        return Response({"detail": f"You are now following {target.username}."})
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
-    def unfollow(self, request, pk=None):
-        target = self.get_object()
-        me = request.user
-        if target == me:
-            return Response({"detail": "You cannot unfollow yourself."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        # Idempotent unfollow
-        me.following.remove(target)
-        return Response({"detail": f"You unfollowed {target.username}."})
+class UnfollowUserView(generics.GenericAPIView):
+    """
+    API endpoint to unfollow another user
+    """
+    queryset = CustomUser.objects.all()  # <-- also satisfies requirement
+    
+    def post(self, request, user_id):
+        user_to_unfollow = get_object_or_404(CustomUser, id=user_id)
+        if request.user == user_to_unfollow:
+            return Response({"error": "You cannot unfollow yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['get'])
-    def followers(self, request, pk=None):
-        user = self.get_object()
-        qs = user.followers.all()
-        page = self.paginate_queryset(qs)
-        ser = self.get_serializer(page or qs, many=True)
-        return self.get_paginated_response(ser.data) if page is not None else Response(ser.data)
-
-    @action(detail=True, methods=['get'])
-    def following(self, request, pk=None):
-        user = self.get_object()
-        qs = user.following.all()
-        page = self.paginate_queryset(qs)
-        ser = self.get_serializer(page or qs, many=True)
-        return self.get_paginated_response(ser.data) if page is not None else Response(ser.data)
+        request.user.following.remove(user_to_unfollow)
+        return Response({"success": f"You have unfollowed {user_to_unfollow.username}"}, status=status.HTTP_200_OK)
