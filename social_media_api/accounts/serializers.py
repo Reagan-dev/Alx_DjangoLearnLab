@@ -24,3 +24,28 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         Token.objects.create(user=user)  # Create token for new user
         return user
+
+class UserPublicSerializer(serializers.ModelSerializer):
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'bio', 'profile_picture',
+            'followers_count', 'following_count', 'is_following'
+        ]
+        read_only_fields = fields
+
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.following.count()
+
+    def get_is_following(self, obj):
+        req = self.context.get('request')
+        if not req or not req.user.is_authenticated:
+            return False
+        return obj.followers.filter(id=req.user.id).exists()
